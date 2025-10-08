@@ -304,7 +304,7 @@ class PageController extends Controller
             'content_sections.*.section_type' => 'required|string|in:text,html,image,gallery,video,embed',
             'content_sections.*.layout_type' => 'required|string|in:single,two_column,three_column',
             'content_sections.*.section_name' => 'nullable|string|max:255',
-            'content_sections.*.single_content' => 'nullable|string',
+            'content_sections.*.content' => 'nullable|string',
             'content_sections.*.single_column_type' => 'nullable|string|in:text,html,image,gallery,video,embed,content',
             'content_sections.*.single_image' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'content_sections.*.single_gallery' => 'nullable|array',
@@ -327,13 +327,26 @@ class PageController extends Controller
             'content_sections.*.column_2_embed' => 'nullable|string',
             'content_sections.*.column_3_content' => 'nullable|string',
             'content_sections.*.column_3_type' => 'nullable|string|in:text,html,image,gallery,video,embed,content',
-            'content_sections.*.column_3_image' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'content_sections.*.column_1_image_url' => 'nullable|url',
+            'content_sections.*.column_2_image_url' => 'nullable|url',
+            'content_sections.*.column_3_image_url' => 'nullable|url',
             'content_sections.*.column_3_gallery' => 'nullable|array',
             'content_sections.*.column_3_gallery.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'content_sections.*.column_3_video' => 'nullable|file|mimes:mp4,mov,ogg,qt|max:10240',
+            'content_sections.*.column_1_video' => 'nullable|url',
+            'content_sections.*.column_2_video' => 'nullable|url',
+            'content_sections.*.column_3_video' => 'nullable|url',
             'content_sections.*.column_3_embed' => 'nullable|string',
             'content_sections.*.gallery_files' => 'nullable|array',
             'content_sections.*.gallery_files.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'content_sections.*.video_url' => 'nullable|url',
+            'content_sections.*.video_caption' => 'nullable|string',
+            'content_sections.*.gallery_urls' => 'nullable|string',
+            'content_sections.*.gallery_caption' => 'nullable|string',
+            'content_sections.*.image_url' => 'nullable|url',
+            'content_sections.*.image_caption' => 'nullable|string',
+            'content_sections.*.image_alt' => 'nullable|string',
+            'content_sections.*.embed_code' => 'nullable|string',
+            'content_sections.*.embed_caption' => 'nullable|string',
         ];
 
         try {
@@ -393,6 +406,31 @@ class PageController extends Controller
                     Log::info('Gallery files uploaded', ['paths' => $galleryPaths]);
                 }
                 
+                // Handle video content
+                if (isset($sectionData['video_url'])) {
+                    $dataFields['video_url'] = $sectionData['video_url'];
+                    Log::info('Video URL saved to dataFields', ['video_url' => $sectionData['video_url']]);
+                }
+                if (isset($sectionData['video_caption'])) {
+                    $dataFields['video_caption'] = $sectionData['video_caption'];
+                }
+                
+                // Handle embed content
+                if (isset($sectionData['embed_code'])) {
+                    $dataFields['embed_code'] = $sectionData['embed_code'];
+                }
+                if (isset($sectionData['embed_caption'])) {
+                    $dataFields['embed_caption'] = $sectionData['embed_caption'];
+                }
+                
+                // Handle gallery content
+                if (isset($sectionData['gallery_urls'])) {
+                    $dataFields['gallery_urls'] = $sectionData['gallery_urls'];
+                }
+                if (isset($sectionData['gallery_caption'])) {
+                    $dataFields['gallery_caption'] = $sectionData['gallery_caption'];
+                }
+                
                 // Handle column types and column-specific content
                 for ($col = 1; $col <= 3; $col++) {
                     if (isset($sectionData["column_{$col}_type"])) {
@@ -414,6 +452,24 @@ class PageController extends Controller
                         $dataFields["column_{$col}_gallery_paths"] = $galleryPaths;
                         Log::info("Column {$col} gallery uploaded", ['paths' => $galleryPaths]);
                     }
+                    
+                    // Handle column video URLs
+                    if (isset($sectionData["column_{$col}_video"])) {
+                        $dataFields["column_{$col}_video"] = $sectionData["column_{$col}_video"];
+                        Log::info("Column {$col} video URL saved", ['video_url' => $sectionData["column_{$col}_video"]]);
+                    }
+                    
+                    // Handle column image URLs
+                    if (isset($sectionData["column_{$col}_image_url"])) {
+                        $dataFields["column_{$col}_image_url"] = $sectionData["column_{$col}_image_url"];
+                        Log::info("Column {$col} image URL saved", ['image_url' => $sectionData["column_{$col}_image_url"]]);
+                    }
+                    
+                    // Handle column gallery URLs
+                    if (isset($sectionData["column_{$col}_gallery_urls"])) {
+                        $dataFields["column_{$col}_gallery_urls"] = $sectionData["column_{$col}_gallery_urls"];
+                        Log::info("Column {$col} gallery URLs saved", ['gallery_urls' => $sectionData["column_{$col}_gallery_urls"]]);
+                    }
                 }
                 
                 // Create the content section
@@ -421,7 +477,7 @@ class PageController extends Controller
                     'section_type' => $sectionData['section_type'],
                     'layout_type' => $sectionData['layout_type'],
                     'section_name' => $sectionData['section_name'] ?? null,
-                    'content' => $sectionData['single_content'] ?? null,
+                    'content' => $sectionData['content'] ?? $sectionData['single_content'] ?? $sectionData['column_1_content'] ?? null,
                     'column_1_content' => $sectionData['column_1_content'] ?? null,
                     'column_2_content' => $sectionData['column_2_content'] ?? null,
                     'column_3_content' => $sectionData['column_3_content'] ?? null,

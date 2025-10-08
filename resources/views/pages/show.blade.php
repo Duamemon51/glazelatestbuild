@@ -99,28 +99,28 @@
 
                                 @case('gallery')
                                     @php
+                                        // Ensure data is an array
+                                        $sectionData = is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true);
                                         $galleryImages = [];
-                                        $galleryCaption = $section->data['gallery_caption'] ?? null;
-                                        
-                                        // Handle gallery URLs from data field
-                                        if ($section->data && isset($section->data['gallery_urls'])) {
-                                            $urls = explode("\n", $section->data['gallery_urls']);
+                                        $galleryCaption = $sectionData['gallery_caption'] ?? null;                                        // Handle gallery URLs from data field
+                                        if ($sectionData && isset($sectionData['gallery_urls'])) {
+                                            $urls = explode("\n", $sectionData['gallery_urls']);
                                             $galleryImages = array_filter(array_map('trim', $urls));
                                         }
-                                        
+
                                         // Handle uploaded gallery images (new uploaded files)
-                                        if ($section->data && isset($section->data['gallery_paths'])) {
-                                            foreach ($section->data['gallery_paths'] as $path) {
+                                        if ($sectionData && isset($sectionData['gallery_paths'])) {
+                                            foreach ($sectionData['gallery_paths'] as $path) {
                                                 $galleryImages[] = 'storage/' . $path;
                                             }
                                         }
-                                        
+
                                         // Also check if images are stored in data array format
-                                        if ($section->data && is_array($section->data) && isset($section->data['images'])) {
-                                            $galleryImages = array_merge($galleryImages, $section->data['images']);
+                                        if ($sectionData && is_array($sectionData) && isset($sectionData['images'])) {
+                                            $galleryImages = array_merge($galleryImages, $sectionData['images']);
                                         }
                                     @endphp
-                                    
+
                                     @if($galleryImages)
                                         <div class="row g-3 mb-3">
                                             @foreach($galleryImages as $image)
@@ -132,16 +132,21 @@
                                         @if($galleryCaption)
                                             <p class="text-center text-muted small">{{ $galleryCaption }}</p>
                                         @endif
+                                    @else
+                                        <div class="text-center mb-3">
+                                            <p class="text-muted">No gallery images found</p>
+                                            <p class="text-muted small">Data: {{ json_encode($sectionData) }}</p>
+                                        </div>
                                     @endif
                                     @break
 
                                 @case('video')
                                     @php
-                                        $videoUrl = $section->data['video_url'] ?? $section->content ?? null;
-                                        $videoCaption = $section->data['video_caption'] ?? null;
-                                        $embedCode = null;
-                                        
-                                        if ($videoUrl) {
+                                        // Ensure data is an array
+                                        $sectionData = is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true);
+                                        $videoUrl = $sectionData['video_url'] ?? $section->content ?? null;
+                                        $videoCaption = $sectionData['video_caption'] ?? null;
+                                        $embedCode = null;                                        if ($videoUrl) {
                                             // Convert YouTube URLs to embed format
                                             if (strpos($videoUrl, 'youtube.com/watch') !== false) {
                                                 preg_match('/[?&]v=([^&]+)/', $videoUrl, $matches);
@@ -163,20 +168,21 @@
                                                     $embedCode = '<iframe width="100%" height="400" src="https://player.vimeo.com/video/' . $matches[1] . '" frameborder="0" allowfullscreen></iframe>';
                                                 }
                                             }
-                                            // Handle direct video files
-                                            elseif (preg_match('/\.(mp4|webm|ogg)$/i', $videoUrl)) {
-                                                $embedCode = '<video class="img-fluid rounded shadow" controls style="max-height:500px; width: 100%; object-fit: cover;"><source src="' . asset($videoUrl) . '" type="video/mp4">Your browser does not support the video tag.</video>';
-                                            }
+                                        // Handle direct video files
+                                        elseif (preg_match('/\.(mp4|webm|ogg)$/i', $videoUrl)) {
+                                            $embedCode = '<video class="img-fluid rounded shadow" controls style="max-height:500px; width: 100%; object-fit: cover;"><source src="' . asset($videoUrl) . '" type="video/mp4">Your browser does not support the video tag.</video>';
                                         }
-                                    @endphp
-                                    
-                                    @if($embedCode)
+                                    @endphp                                    @if($embedCode)
                                         <div class="text-center mb-3">
                                             {!! $embedCode !!}
                                         </div>
                                         @if($videoCaption)
                                             <p class="text-center text-muted small">{{ $videoCaption }}</p>
                                         @endif
+                                    @else
+                                        <div class="text-center mb-3">
+                                            <p class="text-muted">Video URL: {{ $videoUrl ?: 'No URL found' }}</p>
+                                        </div>
                                     @endif
                                     @break
 

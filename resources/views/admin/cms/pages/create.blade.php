@@ -839,6 +839,51 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // CRITICAL: Handle CKEditor data on form submission
+    const pageForm = document.getElementById('pageForm');
+    if (pageForm) {
+        pageForm.addEventListener('submit', function(e) {
+            console.log('Create form submission started');
+
+            // Update all CKEditor instances before form submission
+            const ckEditors = document.querySelectorAll('.content-editor, .column-editor');
+            console.log('Found CKEditor textareas:', ckEditors.length);
+
+            ckEditors.forEach((textarea, index) => {
+                try {
+                    if (textarea && textarea.ckEditorInstance) {
+                        console.log(`Updating CKEditor ${index + 1} for:`, textarea.name);
+                        const editorData = textarea.ckEditorInstance.getData();
+                        textarea.value = editorData;
+                        console.log(`Updated textarea ${textarea.name} with ${editorData.length} characters`);
+                    } else {
+                        console.warn(`No CKEditor instance found for textarea ${index + 1}:`, textarea ? textarea.name : 'unknown');
+                    }
+                } catch (error) {
+                    console.error(`Error updating CKEditor ${index + 1}:`, error);
+                }
+            });
+
+            // Log form data for debugging
+            try {
+                const formData = new FormData(this);
+                console.log('Final create form data check:');
+                let ckEditorCount = 0;
+                for (let [key, value] of formData.entries()) {
+                    if (key.includes('content') && typeof value === 'string' && value.length > 100) {
+                        ckEditorCount++;
+                        console.log(`${key}: ${value.substring(0, 100)}... (${value.length} chars)`);
+                    }
+                }
+                console.log(`Total CKEditor fields with content: ${ckEditorCount}`);
+            } catch (error) {
+                console.error('Error logging form data:', error);
+            }
+
+            // Don't prevent default - let the form submit normally
+        });
+    }
+
 });
 </script>
 @endpush

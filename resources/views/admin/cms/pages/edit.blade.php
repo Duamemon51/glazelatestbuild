@@ -73,10 +73,9 @@
                                 </button>
                             </div>
 
-                            <!-- Section Type -->
                             <div class="mb-4">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Section Type</label>
-                                <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 section-type" name="content_sections[{{ $index }}][section_type]" onchange="toggleSectionType(this)" required>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 section-type" name="content_sections[{{ $index }}][section_type]" required>
                                     <option value="html" {{ $section->section_type == 'html' ? 'selected' : '' }}>Rich Text (HTML)</option>
                                     <option value="text" {{ $section->section_type == 'text' ? 'selected' : '' }}>Plain Text</option>
                                     <option value="image" {{ $section->section_type == 'image' ? 'selected' : '' }}>Single Image</option>
@@ -97,7 +96,7 @@
                                 <!-- Layout Type -->
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Layout Type</label>
-                                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 layout-type" name="content_sections[{{ $index }}][layout_type]" onchange="toggleColumnFields(this)">
+                                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 layout-type" name="content_sections[{{ $index }}][layout_type]">
                                         <option value="single" {{ old('content_sections.' . $index . '.layout_type', $section->layout_type ?? 'single') == 'single' ? 'selected' : '' }}>Single Column</option>
                                         <option value="two_column" {{ old('content_sections.' . $index . '.layout_type', $section->layout_type) == 'two_column' ? 'selected' : '' }}>Two Columns</option>
                                         <option value="three_column" {{ old('content_sections.' . $index . '.layout_type', $section->layout_type) == 'three_column' ? 'selected' : '' }}>Three Columns</option>
@@ -107,7 +106,7 @@
                             <!-- Single Column Content -->
                             <div class="content-editor-container single-column-content" style="{{ old('content_sections.' . $index . '.layout_type', $section->layout_type ?? 'single') == 'single' ? 'display: block;' : 'display: none;' }}">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Content</label>
-                                <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 content-editor" name="content_sections[{{ $index }}][content]" rows="8">{{ old('content_sections.' . $index . '.content', $section->content) }}</textarea>
+                                <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 content-editor" name="content_sections[{{ $index }}][single_content]" rows="8">{{ old('content_sections.' . $index . '.single_content', $section->content) }}</textarea>
                             </div>
 
                             <!-- Multi-Column Content -->
@@ -117,7 +116,7 @@
                                     <h4 class="text-md font-medium text-gray-800 mb-3">Column 1</h4>
                                     <div class="mb-3">
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Content Type</label>
-                                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 column-type" name="content_sections[{{ $index }}][column_1_type]" onchange="toggleColumnContentType(this, 1)">
+                                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 column-type" name="content_sections[{{ $index }}][column_1_type]">
                                             <option value="content" {{ old('content_sections.' . $index . '.column_1_type', $section->column_1_type ?? 'content') == 'content' ? 'selected' : '' }}>Rich Text Content</option>
                                             <option value="image" {{ old('content_sections.' . $index . '.column_1_type', $section->column_1_type) == 'image' ? 'selected' : '' }}>Single Image</option>
                                             <option value="gallery" {{ old('content_sections.' . $index . '.column_1_type', $section->column_1_type) == 'gallery' ? 'selected' : '' }}>Image Gallery (Slider)</option>
@@ -133,27 +132,59 @@
                                             <label class="block text-sm font-medium text-gray-700 mb-2">Upload Image</label>
                                             <input type="file" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][column_1_image]" accept="image/*">
                                             <p class="text-sm text-gray-500 mt-1">Or enter image URL:</p>
-                                            <input type="url" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1" name="content_sections[{{ $index }}][column_1_image_url]" value="{{ old('content_sections.' . $index . '.column_1_image_url', $section->data['column_1_image_url'] ?? '') }}" placeholder="https://example.com/image.jpg">
+                                            <input type="url" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1" name="content_sections[{{ $index }}][column_1_image_url]" value="{{ old('content_sections.' . $index . '.column_1_image_url', (is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true))['column_1_image_url'] ?? '') }}" placeholder="https://example.com/image.jpg">
+                                            @php
+                                                $sectionData = is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true);
+                                                $currentCol1ImageUrl = $sectionData['column_1_image_url'] ?? null;
+                                                $currentCol1ImagePath = $sectionData['column_1_image_path'] ?? null;
+                                            @endphp
+                                            @if($currentCol1ImageUrl || $currentCol1ImagePath)
+                                            <div class="mt-2">
+                                                <img src="{{ $currentCol1ImageUrl ?: asset('storage/' . $currentCol1ImagePath) }}" alt="Current image" class="max-w-full h-auto max-h-24 rounded border">
+                                            </div>
+                                            @endif
                                         </div>
                                         <div class="content-type-gallery" style="{{ old('content_sections.' . $index . '.column_1_type', $section->column_1_type ?? 'content') == 'gallery' ? 'display: block;' : 'display: none;' }}">
                                             <label class="block text-sm font-medium text-gray-700 mb-2">Upload Gallery Images</label>
                                             <input type="file" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][column_1_gallery][]" accept="image/*" multiple>
                                             <p class="text-sm text-gray-500 mt-1">Or enter image URLs (one per line):</p>
-                                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1" name="content_sections[{{ $index }}][column_1_gallery_urls]" rows="4" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg&#10;https://example.com/image3.jpg">{{ old('content_sections.' . $index . '.column_1_gallery_urls', $section->data['column_1_gallery_urls'] ?? '') }}</textarea>
+                                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1" name="content_sections[{{ $index }}][column_1_gallery_urls]" rows="4" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg&#10;https://example.com/image3.jpg">{{ old('content_sections.' . $index . '.column_1_gallery_urls', (is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true))['column_1_gallery_urls'] ?? '') }}</textarea>
+                                            @php
+                                                $sectionData = is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true);
+                                                $currentCol1GalleryUrls = $sectionData['column_1_gallery_urls'] ?? null;
+                                                $currentCol1GalleryPaths = $sectionData['column_1_gallery_paths'] ?? null;
+                                            @endphp
+                                            @if($currentCol1GalleryUrls || $currentCol1GalleryPaths)
+                                            <div class="mt-2">
+                                                <div class="grid grid-cols-3 gap-1">
+                                                    @if($currentCol1GalleryUrls)
+                                                        @foreach(explode("\n", trim($currentCol1GalleryUrls)) as $url)
+                                                            @if(trim($url))
+                                                            <img src="{{ trim($url) }}" alt="Gallery image" class="w-full h-16 object-cover rounded border">
+                                                            @endif
+                                                        @endforeach
+                                                    @endif
+                                                    @if($currentCol1GalleryPaths && is_array($currentCol1GalleryPaths))
+                                                        @foreach($currentCol1GalleryPaths as $path)
+                                                            <img src="{{ asset('storage/' . $path) }}" alt="Gallery image" class="w-full h-16 object-cover rounded border">
+                                                        @endforeach
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            @endif
                                         </div>
                                         <div class="content-type-video" style="{{ old('content_sections.' . $index . '.column_1_type', $section->column_1_type ?? 'content') == 'video' ? 'display: block;' : 'display: none;' }}">
                                             <label class="block text-sm font-medium text-gray-700 mb-2">YouTube Video URL</label>
-                                            <input type="url" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][column_1_video]" value="{{ old('content_sections.' . $index . '.column_1_video', $section->data['column_1_video'] ?? '') }}" placeholder="https://www.youtube.com/watch?v=VIDEO_ID">
+                                            <input type="url" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][column_1_video]" value="{{ old('content_sections.' . $index . '.column_1_video', (is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true))['column_1_video'] ?? '') }}" placeholder="https://www.youtube.com/watch?v=VIDEO_ID">
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Column 2 -->
                                 <div class="mb-6 border border-gray-200 rounded-lg p-4 column-2-field">
                                     <h4 class="text-md font-medium text-gray-800 mb-3">Column 2</h4>
                                     <div class="mb-3">
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Content Type</label>
-                                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 column-type" name="content_sections[{{ $index }}][column_2_type]" onchange="toggleColumnContentType(this, 2)">
+                                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 column-type" name="content_sections[{{ $index }}][column_2_type]">
                                             <option value="content" {{ old('content_sections.' . $index . '.column_2_type', $section->column_2_type ?? 'content') == 'content' ? 'selected' : '' }}>Rich Text Content</option>
                                             <option value="image" {{ old('content_sections.' . $index . '.column_2_type', $section->column_2_type) == 'image' ? 'selected' : '' }}>Single Image</option>
                                             <option value="gallery" {{ old('content_sections.' . $index . '.column_2_type', $section->column_2_type) == 'gallery' ? 'selected' : '' }}>Image Gallery (Slider)</option>
@@ -169,17 +200,50 @@
                                             <label class="block text-sm font-medium text-gray-700 mb-2">Upload Image</label>
                                             <input type="file" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][column_2_image]" accept="image/*">
                                             <p class="text-sm text-gray-500 mt-1">Or enter image URL:</p>
-                                            <input type="url" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1" name="content_sections[{{ $index }}][column_2_image_url]" value="{{ old('content_sections.' . $index . '.column_2_image_url', $section->data['column_2_image_url'] ?? '') }}" placeholder="https://example.com/image.jpg">
+                                            <input type="url" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1" name="content_sections[{{ $index }}][column_2_image_url]" value="{{ old('content_sections.' . $index . '.column_2_image_url', (is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true))['column_2_image_url'] ?? '') }}" placeholder="https://example.com/image.jpg">
+                                            @php
+                                                $sectionData = is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true);
+                                                $currentCol2ImageUrl = $sectionData['column_2_image_url'] ?? null;
+                                                $currentCol2ImagePath = $sectionData['column_2_image_path'] ?? null;
+                                            @endphp
+                                            @if($currentCol2ImageUrl || $currentCol2ImagePath)
+                                            <div class="mt-2">
+                                                <img src="{{ $currentCol2ImageUrl ?: asset('storage/' . $currentCol2ImagePath) }}" alt="Current image" class="max-w-full h-auto max-h-24 rounded border">
+                                            </div>
+                                            @endif
                                         </div>
                                         <div class="content-type-gallery" style="{{ old('content_sections.' . $index . '.column_2_type', $section->column_2_type ?? 'content') == 'gallery' ? 'display: block;' : 'display: none;' }}">
                                             <label class="block text-sm font-medium text-gray-700 mb-2">Upload Gallery Images</label>
                                             <input type="file" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][column_2_gallery][]" accept="image/*" multiple>
                                             <p class="text-sm text-gray-500 mt-1">Or enter image URLs (one per line):</p>
-                                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1" name="content_sections[{{ $index }}][column_2_gallery_urls]" rows="4" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg&#10;https://example.com/image3.jpg">{{ old('content_sections.' . $index . '.column_2_gallery_urls', $section->data['column_2_gallery_urls'] ?? '') }}</textarea>
+                                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1" name="content_sections[{{ $index }}][column_2_gallery_urls]" rows="4" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg&#10;https://example.com/image3.jpg">{{ old('content_sections.' . $index . '.column_2_gallery_urls', (is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true))['column_2_gallery_urls'] ?? '') }}</textarea>
+                                            @php
+                                                $sectionData = is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true);
+                                                $currentCol2GalleryUrls = $sectionData['column_2_gallery_urls'] ?? null;
+                                                $currentCol2GalleryPaths = $sectionData['column_2_gallery_paths'] ?? null;
+                                            @endphp
+                                            @if($currentCol2GalleryUrls || $currentCol2GalleryPaths)
+                                            <div class="mt-2">
+                                                <div class="grid grid-cols-3 gap-1">
+                                                    @if($currentCol2GalleryUrls)
+                                                        @foreach(explode("\n", trim($currentCol2GalleryUrls)) as $url)
+                                                            @if(trim($url))
+                                                            <img src="{{ trim($url) }}" alt="Gallery image" class="w-full h-16 object-cover rounded border">
+                                                            @endif
+                                                        @endforeach
+                                                    @endif
+                                                    @if($currentCol2GalleryPaths && is_array($currentCol2GalleryPaths))
+                                                        @foreach($currentCol2GalleryPaths as $path)
+                                                            <img src="{{ asset('storage/' . $path) }}" alt="Gallery image" class="w-full h-16 object-cover rounded border">
+                                                        @endforeach
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            @endif
                                         </div>
                                         <div class="content-type-video" style="{{ old('content_sections.' . $index . '.column_2_type', $section->column_2_type ?? 'content') == 'video' ? 'display: block;' : 'display: none;' }}">
                                             <label class="block text-sm font-medium text-gray-700 mb-2">YouTube Video URL</label>
-                                            <input type="url" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][column_2_video]" value="{{ old('content_sections.' . $index . '.column_2_video', $section->data['column_2_video'] ?? '') }}" placeholder="https://www.youtube.com/watch?v=VIDEO_ID">
+                                            <input type="url" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][column_2_video]" value="{{ old('content_sections.' . $index . '.column_2_video', (is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true))['column_2_video'] ?? '') }}" placeholder="https://www.youtube.com/watch?v=VIDEO_ID">
                                         </div>
                                     </div>
                                 </div>
@@ -189,7 +253,7 @@
                                     <h4 class="text-md font-medium text-gray-800 mb-3">Column 3</h4>
                                     <div class="mb-3">
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Content Type</label>
-                                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 column-type" name="content_sections[{{ $index }}][column_3_type]" onchange="toggleColumnContentType(this, 3)">
+                                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 column-type" name="content_sections[{{ $index }}][column_3_type]">
                                             <option value="content" {{ old('content_sections.' . $index . '.column_3_type', $section->column_3_type ?? 'content') == 'content' ? 'selected' : '' }}>Rich Text Content</option>
                                             <option value="image" {{ old('content_sections.' . $index . '.column_3_type', $section->column_3_type) == 'image' ? 'selected' : '' }}>Single Image</option>
                                             <option value="gallery" {{ old('content_sections.' . $index . '.column_3_type', $section->column_3_type) == 'gallery' ? 'selected' : '' }}>Image Gallery (Slider)</option>
@@ -205,17 +269,50 @@
                                             <label class="block text-sm font-medium text-gray-700 mb-2">Upload Image</label>
                                             <input type="file" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][column_3_image]" accept="image/*">
                                             <p class="text-sm text-gray-500 mt-1">Or enter image URL:</p>
-                                            <input type="url" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1" name="content_sections[{{ $index }}][column_3_image_url]" value="{{ old('content_sections.' . $index . '.column_3_image_url', $section->data['column_3_image_url'] ?? '') }}" placeholder="https://example.com/image.jpg">
+                                            <input type="url" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1" name="content_sections[{{ $index }}][column_3_image_url]" value="{{ old('content_sections.' . $index . '.column_3_image_url', (is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true))['column_3_image_url'] ?? '') }}" placeholder="https://example.com/image.jpg">
+                                            @php
+                                                $sectionData = is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true);
+                                                $currentCol3ImageUrl = $sectionData['column_3_image_url'] ?? null;
+                                                $currentCol3ImagePath = $sectionData['column_3_image_path'] ?? null;
+                                            @endphp
+                                            @if($currentCol3ImageUrl || $currentCol3ImagePath)
+                                            <div class="mt-2">
+                                                <img src="{{ $currentCol3ImageUrl ?: asset('storage/' . $currentCol3ImagePath) }}" alt="Current image" class="max-w-full h-auto max-h-24 rounded border">
+                                            </div>
+                                            @endif
                                         </div>
                                         <div class="content-type-gallery" style="{{ old('content_sections.' . $index . '.column_3_type', $section->column_3_type ?? 'content') == 'gallery' ? 'display: block;' : 'display: none;' }}">
                                             <label class="block text-sm font-medium text-gray-700 mb-2">Upload Gallery Images</label>
                                             <input type="file" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][column_3_gallery][]" accept="image/*" multiple>
                                             <p class="text-sm text-gray-500 mt-1">Or enter image URLs (one per line):</p>
-                                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1" name="content_sections[{{ $index }}][column_3_gallery_urls]" rows="4" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg&#10;https://example.com/image3.jpg">{{ old('content_sections.' . $index . '.column_3_gallery_urls', $section->data['column_3_gallery_urls'] ?? '') }}</textarea>
+                                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1" name="content_sections[{{ $index }}][column_3_gallery_urls]" rows="4" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg&#10;https://example.com/image3.jpg">{{ old('content_sections.' . $index . '.column_3_gallery_urls', (is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true))['column_3_gallery_urls'] ?? '') }}</textarea>
+                                            @php
+                                                $sectionData = is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true);
+                                                $currentCol3GalleryUrls = $sectionData['column_3_gallery_urls'] ?? null;
+                                                $currentCol3GalleryPaths = $sectionData['column_3_gallery_paths'] ?? null;
+                                            @endphp
+                                            @if($currentCol3GalleryUrls || $currentCol3GalleryPaths)
+                                            <div class="mt-2">
+                                                <div class="grid grid-cols-3 gap-1">
+                                                    @if($currentCol3GalleryUrls)
+                                                        @foreach(explode("\n", trim($currentCol3GalleryUrls)) as $url)
+                                                            @if(trim($url))
+                                                            <img src="{{ trim($url) }}" alt="Gallery image" class="w-full h-16 object-cover rounded border">
+                                                            @endif
+                                                        @endforeach
+                                                    @endif
+                                                    @if($currentCol3GalleryPaths && is_array($currentCol3GalleryPaths))
+                                                        @foreach($currentCol3GalleryPaths as $path)
+                                                            <img src="{{ asset('storage/' . $path) }}" alt="Gallery image" class="w-full h-16 object-cover rounded border">
+                                                        @endforeach
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            @endif
                                         </div>
                                         <div class="content-type-video" style="{{ old('content_sections.' . $index . '.column_3_type', $section->column_3_type ?? 'content') == 'video' ? 'display: block;' : 'display: none;' }}">
                                             <label class="block text-sm font-medium text-gray-700 mb-2">YouTube Video URL</label>
-                                            <input type="url" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][column_3_video]" value="{{ old('content_sections.' . $index . '.column_3_video', $section->data['column_3_video'] ?? '') }}" placeholder="https://www.youtube.com/watch?v=VIDEO_ID">
+                                            <input type="url" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][column_3_video]" value="{{ old('content_sections.' . $index . '.column_3_video', (is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true))['column_3_video'] ?? '') }}" placeholder="https://www.youtube.com/watch?v=VIDEO_ID">
                                         </div>
                                     </div>
                                 </div>
@@ -227,7 +324,7 @@
                                 <!-- Layout Type -->
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Layout Type</label>
-                                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 layout-type" name="content_sections[{{ $index }}][layout_type]" onchange="toggleColumnFields(this)">
+                                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 layout-type" name="content_sections[{{ $index }}][layout_type]">
                                         <option value="single" {{ old('content_sections.' . $index . '.layout_type', $section->layout_type ?? 'single') == 'single' ? 'selected' : '' }}>Single Column</option>
                                         <option value="two_column" {{ old('content_sections.' . $index . '.layout_type', $section->layout_type) == 'two_column' ? 'selected' : '' }}>Two Columns</option>
                                         <option value="three_column" {{ old('content_sections.' . $index . '.layout_type', $section->layout_type) == 'three_column' ? 'selected' : '' }}>Three Columns</option>
@@ -273,15 +370,28 @@
                                 </div>
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Or Image URL</label>
-                                    <input type="url" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][image_url]" value="{{ old('content_sections.' . $index . '.image_url', $section->data['image_url'] ?? '') }}" placeholder="https://example.com/image.jpg">
+                                    <input type="url" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][image_url]" value="{{ old('content_sections.' . $index . '.image_url', (is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true))['image_url'] ?? '') }}" placeholder="https://example.com/image.jpg">
                                 </div>
+                                @php
+                                    $sectionData = is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true);
+                                    $currentImageUrl = $sectionData['image_url'] ?? null;
+                                    $currentImagePath = $sectionData['single_image_path'] ?? $sectionData['image_path'] ?? null;
+                                @endphp
+                                @if($currentImageUrl || $currentImagePath)
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Current Image</label>
+                                    <div class="border border-gray-300 rounded-md p-2">
+                                        <img src="{{ $currentImageUrl ?: asset('storage/' . $currentImagePath) }}" alt="{{ $sectionData['image_alt'] ?? 'Current image' }}" class="max-w-full h-auto max-h-48 rounded">
+                                    </div>
+                                </div>
+                                @endif
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Image Caption (Optional)</label>
-                                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][image_caption]" value="{{ old('content_sections.' . $index . '.image_caption', $section->data['image_caption'] ?? '') }}" placeholder="Enter image caption...">
+                                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][image_caption]" value="{{ old('content_sections.' . $index . '.image_caption', (is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true))['image_caption'] ?? '') }}" placeholder="Enter image caption...">
                                 </div>
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Alt Text</label>
-                                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][image_alt]" value="{{ old('content_sections.' . $index . '.image_alt', $section->data['image_alt'] ?? '') }}" placeholder="Enter alt text for accessibility...">
+                                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][image_alt]" value="{{ old('content_sections.' . $index . '.image_alt', (is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true))['image_alt'] ?? '') }}" placeholder="Enter alt text for accessibility...">
                                 </div>
                             </div>
 
@@ -293,11 +403,41 @@
                                 </div>
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Or Gallery Image URLs (one per line)</label>
-                                    <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][gallery_urls]" rows="6" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg&#10;https://example.com/image3.jpg">{{ old('content_sections.' . $index . '.gallery_urls', $section->data['gallery_urls'] ?? '') }}</textarea>
+                                    <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][gallery_urls]" rows="6" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg&#10;https://example.com/image3.jpg">{{ old('content_sections.' . $index . '.gallery_urls', (is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true))['gallery_urls'] ?? '') }}</textarea>
                                 </div>
+                                @php
+                                    $sectionData = is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true);
+                                    $currentGalleryUrls = $sectionData['gallery_urls'] ?? null;
+                                    $currentGalleryPaths = $sectionData['gallery_paths'] ?? null;
+                                @endphp
+                                @if($currentGalleryUrls || $currentGalleryPaths)
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Current Gallery Images</label>
+                                    <div class="border border-gray-300 rounded-md p-2">
+                                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                            @if($currentGalleryUrls)
+                                                @foreach(explode("\n", trim($currentGalleryUrls)) as $url)
+                                                    @if(trim($url))
+                                                    <div class="relative">
+                                                        <img src="{{ trim($url) }}" alt="Gallery image" class="w-full h-20 object-cover rounded">
+                                                    </div>
+                                                    @endif
+                                                @endforeach
+                                            @endif
+                                            @if($currentGalleryPaths && is_array($currentGalleryPaths))
+                                                @foreach($currentGalleryPaths as $path)
+                                                    <div class="relative">
+                                                        <img src="{{ asset('storage/' . $path) }}" alt="Gallery image" class="w-full h-20 object-cover rounded">
+                                                    </div>
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                @endif
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Gallery Caption (Optional)</label>
-                                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][gallery_caption]" value="{{ old('content_sections.' . $index . '.gallery_caption', $section->data['gallery_caption'] ?? '') }}" placeholder="Enter gallery caption...">
+                                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][gallery_caption]" value="{{ old('content_sections.' . $index . '.gallery_caption', (is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true))['gallery_caption'] ?? '') }}" placeholder="Enter gallery caption...">
                                 </div>
                             </div>
 
@@ -305,11 +445,11 @@
                             <div class="section-type-content section-type-video" style="{{ $section->section_type == 'video' ? 'display: block;' : 'display: none;' }}">
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Video URL</label>
-                                    <input type="url" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][video_url]" value="{{ old('content_sections.' . $index . '.video_url', $section->data['video_url'] ?? '') }}" placeholder="https://www.youtube.com/watch?v=VIDEO_ID or https://vimeo.com/VIDEO_ID">
+                                    <input type="url" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][video_url]" value="{{ old('content_sections.' . $index . '.video_url', (is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true))['video_url'] ?? '') }}" placeholder="https://www.youtube.com/watch?v=VIDEO_ID or https://vimeo.com/VIDEO_ID">
                                 </div>
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Video Caption (Optional)</label>
-                                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][video_caption]" value="{{ old('content_sections.' . $index . '.video_caption', $section->data['video_caption'] ?? '') }}" placeholder="Enter video caption...">
+                                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][video_caption]" value="{{ old('content_sections.' . $index . '.video_caption', (is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true))['video_caption'] ?? '') }}" placeholder="Enter video caption...">
                                 </div>
                             </div>
 
@@ -317,11 +457,11 @@
                             <div class="section-type-content section-type-embed" style="{{ $section->section_type == 'embed' ? 'display: block;' : 'display: none;' }}">
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Embed Code</label>
-                                    <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][embed_code]" rows="6" placeholder="Paste your embed code here (iframe, script tags, etc.)...">{{ old('content_sections.' . $index . '.embed_code', $section->data['embed_code'] ?? '') }}</textarea>
+                                    <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][embed_code]" rows="6" placeholder="Paste your embed code here (iframe, script tags, etc.)...">{{ old('content_sections.' . $index . '.embed_code', (is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true))['embed_code'] ?? '') }}</textarea>
                                 </div>
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Embed Caption (Optional)</label>
-                                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][embed_caption]" value="{{ old('content_sections.' . $index . '.embed_caption', $section->data['embed_caption'] ?? '') }}" placeholder="Enter embed caption...">
+                                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" name="content_sections[{{ $index }}][embed_caption]" value="{{ old('content_sections.' . $index . '.embed_caption', (is_array($section->data) ? $section->data : json_decode($section->data ?? '{}', true))['embed_caption'] ?? '') }}" placeholder="Enter embed caption...">
                                 </div>
                             </div>
 
@@ -635,6 +775,71 @@ function toggleSectionType(selectElement) {
 
 document.addEventListener('DOMContentLoaded', function() {
 
+    // Consolidated form submission logic
+    const pageForm = document.getElementById('pageForm');
+    if (pageForm) {
+        pageForm.addEventListener('submit', function(e) {
+            console.log('Form submission started');
+
+            // CRITICAL: Update all CKEditor instances before form submission
+            const ckEditors = document.querySelectorAll('.content-editor, .column-editor');
+            console.log('Found CKEditor textareas:', ckEditors.length);
+
+            ckEditors.forEach((textarea, index) => {
+                try {
+                    if (textarea && textarea.ckEditorInstance) {
+                        console.log(`Updating CKEditor ${index + 1} for:`, textarea.name);
+                        const editorData = textarea.ckEditorInstance.getData();
+                        textarea.value = editorData;
+                        console.log(`Updated textarea ${textarea.name} with ${editorData.length} characters`);
+                    } else {
+                        console.warn(`No CKEditor instance found for textarea ${index + 1}:`, textarea ? textarea.name : 'unknown');
+                    }
+                } catch (error) {
+                    console.error(`Error updating CKEditor ${index + 1}:`, error);
+                }
+            });
+
+            // Additional fallback: Try to find any CKEditor instances that might not be stored
+            try {
+                document.querySelectorAll('.ck-editor').forEach((editorWrapper, index) => {
+                    try {
+                        const textarea = editorWrapper.previousElementSibling;
+                        if (textarea && (textarea.classList.contains('content-editor') || textarea.classList.contains('column-editor'))) {
+                            if (textarea.ckEditorInstance) {
+                                const data = textarea.ckEditorInstance.getData();
+                                textarea.value = data;
+                                console.log(`Fallback updated textarea ${textarea.name} with ${data.length} characters`);
+                            }
+                        }
+                    } catch (err) {
+                        console.error(`Fallback error for editor ${index + 1}:`, err);
+                    }
+                });
+            } catch (error) {
+                console.error('Error in fallback CKEditor update:', error);
+            }
+
+            // Log form data for debugging
+            try {
+                const formData = new FormData(this);
+                console.log('Final form data check:');
+                let ckEditorCount = 0;
+                for (let [key, value] of formData.entries()) {
+                    if (key.includes('content') && typeof value === 'string' && value.length > 100) {
+                        ckEditorCount++;
+                        console.log(`${key}: ${value.substring(0, 100)}... (${value.length} chars)`);
+                    }
+                }
+                console.log(`Total CKEditor fields with content: ${ckEditorCount}`);
+            } catch (error) {
+                console.error('Error logging form data:', error);
+            }
+
+            // Don't prevent default - let the form submit normally
+        });
+    }
+
     // Initialize section type visibility - show correct section type based on saved values
     document.querySelectorAll('.section-type').forEach(select => {
         // Manually trigger the toggleSectionType function for initialization
@@ -654,9 +859,34 @@ document.addEventListener('DOMContentLoaded', function() {
         select.dispatchEvent(event);
     });
 
+    // Add event listeners for dynamic functionality
+    document.querySelectorAll('.section-type').forEach(select => {
+        select.addEventListener('change', function() {
+            toggleSectionType(this);
+        });
+    });
+
+    document.querySelectorAll('.layout-type').forEach(select => {
+        select.addEventListener('change', function() {
+            toggleColumnFields(this);
+        });
+    });
+
+    document.querySelectorAll('.column-type').forEach(select => {
+        select.addEventListener('change', function() {
+            const columnNumber = this.closest('.column-field').classList.contains('column-2-field') ? 2 : 
+                                this.closest('.column-field').classList.contains('column-3-field') ? 3 : 1;
+            toggleColumnContentType(this, columnNumber);
+        });
+    });
+
     // Initialize CKEditor for existing editors AFTER all sections are properly shown
     setTimeout(() => {
         initializeCKEditor();
+        // Also try again after a longer delay in case some elements become visible later
+        setTimeout(() => {
+            initializeCKEditor();
+        }, 500);
     }, 100);
 
     // Status change handler
@@ -675,6 +905,26 @@ document.addEventListener('DOMContentLoaded', function() {
         const sectionsContainer = document.getElementById('contentSections');
         const sectionHtml = createSectionHtml(sectionCount);
         sectionsContainer.insertAdjacentHTML('beforeend', sectionHtml);
+
+        // Add event listeners for the new section
+        const newSection = sectionsContainer.lastElementChild;
+        newSection.querySelectorAll('.section-type').forEach(select => {
+            select.addEventListener('change', function() {
+                toggleSectionType(this);
+            });
+        });
+        newSection.querySelectorAll('.layout-type').forEach(select => {
+            select.addEventListener('change', function() {
+                toggleColumnFields(this);
+            });
+        });
+        newSection.querySelectorAll('.column-type').forEach(select => {
+            select.addEventListener('change', function() {
+                const columnNumber = this.closest('.column-field').classList.contains('column-2-field') ? 2 : 
+                                    this.closest('.column-field').classList.contains('column-3-field') ? 3 : 1;
+                toggleColumnContentType(this, columnNumber);
+            });
+        });
 
         // Initialize CKEditor for the new section
         initializeCKEditorForSection(sectionCount);
@@ -754,8 +1004,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Section Type</label>
-                    <select class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 section-type" name="content_sections[${sectionId - 1}][section_type]" onchange="toggleSectionType(this)" required>
-                        <option value="html">Rich Text (HTML)</option>
+                    <select class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 section-type" name="content_sections[${sectionId - 1}][section_type]" required>
+                        <option value="html" selected>Rich Text (HTML)</option>
                         <option value="text">Plain Text</option>
                         <option value="image">Single Image</option>
                         <option value="gallery">Image Gallery</option>
@@ -773,8 +1023,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="section-type-content section-type-html" style="display: block;">
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Layout Type</label>
-                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 layout-type" name="content_sections[${sectionId - 1}][layout_type]" onchange="toggleColumnFields(this)">
-                            <option value="single">Single Column</option>
+                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 layout-type" name="content_sections[${sectionId - 1}][layout_type]">
+                            <option value="single" selected>Single Column</option>
                             <option value="two_column">Two Columns</option>
                             <option value="three_column">Three Columns</option>
                         </select>
@@ -791,7 +1041,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <h4 class="text-md font-medium text-gray-800 mb-3">Column 1</h4>
                             <div class="mb-3">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Content Type</label>
-                                <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 column-type" name="content_sections[${sectionId - 1}][column_1_type]" onchange="toggleColumnContentType(this, 1)">
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 column-type" name="content_sections[${sectionId - 1}][column_1_type]">
                                     <option value="content">Rich Text Content</option>
                                     <option value="image">Single Image</option>
                                     <option value="gallery">Image Gallery (Slider)</option>
@@ -822,12 +1072,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
                         
-                        <!-- Column 2 -->
                         <div class="mb-6 border border-gray-200 rounded-lg p-4 column-2-field">
                             <h4 class="text-md font-medium text-gray-800 mb-3">Column 2</h4>
                             <div class="mb-3">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Content Type</label>
-                                <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 column-type" name="content_sections[${sectionId - 1}][column_2_type]" onchange="toggleColumnContentType(this, 2)">
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 column-type" name="content_sections[${sectionId - 1}][column_2_type]">
                                     <option value="content">Rich Text Content</option>
                                     <option value="image">Single Image</option>
                                     <option value="gallery">Image Gallery (Slider)</option>
@@ -863,7 +1112,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <h4 class="text-md font-medium text-gray-800 mb-3">Column 3</h4>
                             <div class="mb-3">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Content Type</label>
-                                <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 column-type" name="content_sections[${sectionId - 1}][column_3_type]" onchange="toggleColumnContentType(this, 3)">
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 column-type" name="content_sections[${sectionId - 1}][column_3_type]">
                                     <option value="content">Rich Text Content</option>
                                     <option value="image">Single Image</option>
                                     <option value="gallery">Image Gallery (Slider)</option>
@@ -901,8 +1150,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <!-- Layout Type -->
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Layout Type</label>
-                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 layout-type" name="content_sections[${sectionId - 1}][layout_type]" onchange="toggleColumnFields(this)">
-                            <option value="single">Single Column</option>
+                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 layout-type" name="content_sections[${sectionId - 1}][layout_type]">
+                            <option value="single" selected>Single Column</option>
                             <option value="two_column">Two Columns</option>
                             <option value="three_column">Three Columns</option>
                         </select>
@@ -1055,23 +1304,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-
-    // Add form submission debugging
-    document.getElementById('pageForm').addEventListener('submit', function(e) {
-        console.log('Form submission started');
-        console.log('Form action:', this.action);
-        console.log('Form method:', this.method);
-        console.log('Form data being submitted...');
-        
-        // Log some key form data
-        const formData = new FormData(this);
-        console.log('Title:', formData.get('title'));
-        console.log('Slug:', formData.get('slug'));
-        console.log('Content sections count:', document.querySelectorAll('[name^="content_sections"]').length);
-        
-        // Don't prevent default - let the form submit normally
-        // Just log for debugging
-    });
 });
 </script>
 @endpush
